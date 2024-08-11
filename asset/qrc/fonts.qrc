@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="test">
+    <file>../fonts/Agave-Regular.ttf</file>
+    <file>../fonts/LXGWWenKai-Regular.ttf</file>
+  </qresource>
+</RCC>

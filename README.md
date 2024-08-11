@@ -2,13 +2,33 @@
 
 tool name	: dex-viewer
 
-description	: a powerfun dex file format parser tool
+description	: a powerful dex file format parser tool , powered by **PyQt5**
 
 writer		: D0g3.21.Reverse.redqx
 
+---
 
 
-[usage] 
+
+[ feature  && target]
+
+simple and powerful 
+
+
+
+[how to work]
+
+
+
+```
+pip install PyQt5
+cd source
+python main.py
+```
+
+
+
+[tool usage] 
 
 click 'Open'in the menu bar or drag the file into the windows
 
@@ -21,4 +41,12 @@ click 'Open'in the menu bar or drag the file into the windows
 
 
 [to-do-list]
+
+- Complete the first step ✅
+- add Hex View ❌
+- ...
+
+
+
+![image-20240811132351603](./img/image-20240811132351603.png)
 

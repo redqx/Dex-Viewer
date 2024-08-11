@@ -1,0 +1,40 @@
+{
+    "Name": "Dex-Viewer",
+    "Description": "use for analysising Dex File",
+    "Writer": "redqx",
+    "GitHub": "https://github.com/redqx",
+    "DexStruct": {
+        "Header": {
+            "magic_": null,
+            "checksum_": null,
+            "signature_": null,
+            "file_size_": null,
+            "header_size_": null,
+            "endian_tag_": null,
+            "link_size_": null,
+            "link_off_": null,
+            "map_off_": null,
+            "string_ids_size_": null,
+            "string_ids_off_": null,
+            "type_ids_size_": null,
+            "type_ids_off_": null,
+            "proto_ids_size_": null,
+            "proto_ids_off_": null,
+            "field_ids_size_": null,
+            "field_ids_off_": null,
+            "method_ids_size_": null,
+            "method_ids_off_": null,
+            "class_defs_size_": null,
+            "class_defs_off_": null,
+            "data_size_": null,
+            "data_off_": null
+        },
+        "string_ids": "value",
+        "type_ids": "value",
+        "proto_ids": "value",
+        "field_ids": "value",
+        "method_ids": "value",
+        "class_defs": "value",
+        "data": "value"
+    }
+}

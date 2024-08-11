@@ -50,3 +50,10 @@ click 'Open'in the menu bar or drag the file into the windows
 
 ![image-20240811132351603](./img/image-20240811132351603.png)
 
+## Dependency or use follows project code
+
+- Python3
+
+- PyQt5
+
+- [dexparser](https://github.com/bunseokbot/dexparser)

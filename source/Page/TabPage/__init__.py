@@ -65,7 +65,8 @@ class myTabWidget(QTabWidget):
         self.f_dexDict.update({fname: dict_tmp})
 
         #self.widget_DexBaseInfo_workprocess(fname)
-        self.addTab(dict_tmp['dexobj'].f_widget, fname)  #添加显示的页面
+        new_tab_idx = self.addTab(dict_tmp['dexobj'].f_widget, fname)  #添加显示的页面
+        self.setCurrentIndex(new_tab_idx)
 
     def m_tabBar_customContextMenuRequested_func(self, pos: QPoint):
 

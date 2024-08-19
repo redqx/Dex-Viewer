@@ -2,6 +2,7 @@ import os
 import platform
 
 from PyQt5 import uic
+from PyQt5.QtCore import QEvent
 from PyQt5.QtGui import QFontDatabase, QIcon
 
 # diy page
@@ -76,7 +77,8 @@ class Page_Home(ui_BaseWidget):  # QMainWindow
     # def dragMoveEvent(self, evn):
     #     LOG.log_info(msg=f'鼠标移入  {type(evn)} {evn.mimeData().text()}')
     def create_newTab_inTabWidget(self, fpath):
-        if fpath:
+
+        if fpath and os.path.exists(fpath):
             if isDexFile(fpath):
                 if self.f_tabWidget is None:
                     self.f_tabWidget = myTabWidget()

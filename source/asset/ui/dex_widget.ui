@@ -134,19 +134,7 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="leftMargin">
-       <number>2</number>
-      </property>
-      <property name="topMargin">
-       <number>2</number>
-      </property>
-      <property name="rightMargin">
-       <number>2</number>
-      </property>
-      <property name="bottomMargin">
-       <number>2</number>
-      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <widget class="QStackedWidget" name="stackedWidget_Dex">
         <property name="sizePolicy">
@@ -178,22 +166,22 @@
             </row>
             <row>
              <property name="text">
-              <string>file_size_</string>
+              <string>file_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>magic_</string>
+              <string>magic</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>checksum_</string>
+              <string>checksum</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>signature_</string>
+              <string>signature</string>
              </property>
             </row>
             <column>
@@ -228,117 +216,117 @@
            <widget class="QTableWidget" name="tableWidget_DexHeader">
             <row>
              <property name="text">
-              <string>magic_</string>
+              <string>magic</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>checksum_</string>
+              <string>checksum</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>signature_</string>
+              <string>signature</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>file_size_</string>
+              <string>file_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>header_size_</string>
+              <string>header_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>endian_tag_</string>
+              <string>endian_tag</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>link_size_</string>
+              <string>link_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>link_off_</string>
+              <string>link_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>map_off_</string>
+              <string>map_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>string_ids_size_</string>
+              <string>string_ids_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>string_ids_off_</string>
+              <string>string_ids_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>type_ids_size_</string>
+              <string>type_ids_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>type_ids_off_</string>
+              <string>type_ids_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>proto_ids_size_</string>
+              <string>proto_ids_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>proto_ids_off_</string>
+              <string>proto_ids_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>field_ids_size_</string>
+              <string>field_ids_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>field_ids_off_</string>
+              <string>field_ids_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>method_ids_size_</string>
+              <string>method_ids_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>method_ids_off_</string>
+              <string>method_ids_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>class_defs_size_</string>
+              <string>class_defs_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>class_defs_off_</string>
+              <string>class_defs_off</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>data_size_</string>
+              <string>data_size</string>
              </property>
             </row>
             <row>
              <property name="text">
-              <string>data_off_</string>
+              <string>data_off</string>
              </property>
             </row>
             <column>
@@ -381,12 +369,12 @@
             </column>
             <column>
              <property name="text">
-              <string>[*] len_size</string>
+              <string>string_data_off</string>
              </property>
             </column>
             <column>
              <property name="text">
-              <string>len</string>
+              <string>len_size</string>
              </property>
             </column>
             <column>
@@ -467,22 +455,17 @@
             </column>
             <column>
              <property name="text">
-              <string>shorty_idx_</string>
+              <string>shorty_idx</string>
              </property>
             </column>
             <column>
              <property name="text">
-              <string>return_type_idx_</string>
+              <string>return_type_idx</string>
              </property>
             </column>
             <column>
              <property name="text">
-              <string>parameters_off_</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>[*] shorty_str</string>
+              <string>parameters_off</string>
              </property>
             </column>
             <column>
@@ -689,22 +672,27 @@
             </column>
             <column>
              <property name="text">
-              <string>section_type</string>
+              <string>type</string>
              </property>
             </column>
             <column>
              <property name="text">
-              <string>section_size</string>
+              <string>unused</string>
              </property>
             </column>
             <column>
              <property name="text">
-              <string>section_offset</string>
+              <string>size</string>
              </property>
             </column>
             <column>
              <property name="text">
-              <string>[*] section_type_str</string>
+              <string>offset</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>[*] type_str</string>
              </property>
             </column>
            </widget>
@@ -714,16 +702,69 @@
        </widget>
       </item>
       <item>
-       <widget class="QTextBrowser" name="textBrowser_HexVIew">
+       <widget class="QWidget" name="widget_tmp_box3" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>1</verstretch>
          </sizepolicy>
         </property>
-        <property name="acceptDrops">
-         <bool>false</bool>
-        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>1</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QTextBrowser" name="textBrowser_hexTitle">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="html">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Cascadia Code','Cascadia Code'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;&quot;&gt;&lt;span style=&quot; font-family:'Agave','monospace'; font-size:9.8pt; color:#067d17;&quot;&gt; offset  | 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F |.....ascii......|&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTextBrowser" name="textBrowser_HexView">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="acceptDrops">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>

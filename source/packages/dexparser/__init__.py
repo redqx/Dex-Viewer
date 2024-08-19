@@ -1,4 +1,5 @@
 import time
+from ctypes import c_byte, c_uint32, c_uint16
 from io import BytesIO
 from zipfile import ZipFile, is_zipfile
 import struct
@@ -12,6 +13,11 @@ from packages.dexparser.utils import uleb128_value, encoded_field, encoded_metho
 from packages.log import LOG
 
 from PyQt5.QtCore import pyqtSignal, QObject
+
+from packages.mm_type import read_file_from_struct, FileString
+from packages.mm_type.mm_ctype import DataToCClass
+from packages.mm_type.mm_dextype import Dex_HeaderItem, Dex_StringIdItem, structure, Dex_TypeId_Item, Dex_ProtoId_Item, \
+    Dex_FieldId_Item, Dex_MethodId_Item, Dex_ClassDef_Item, Dex_Map_Item
 
 
 # SHORT_TYPES={
@@ -32,20 +38,50 @@ class Dexparser(QObject):
     """
     sig_cost: pyqtSignal = pyqtSignal(float)
 
-    def __init__(self, filedir=None, fileobj=None):
+    def __init__(self, filedir=None):
         super().__init__()
-        if not filedir and not fileobj:
-            raise InsufficientParameterError('fileobj or filedir parameter required.')
-
         if filedir:
             if not os.path.isfile(filedir):
                 raise FileNotFoundError
+            self.file = open(filedir, 'rb')
+            self.data = mmap.mmap(self.file.fileno(), 0, access=mmap.ACCESS_READ)
 
-            with open(filedir, 'rb') as f:
-                self.data = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+        #确定端序
+        end_tag = struct.unpack('<L', self.data[0x28:0x2C])[0]
+        DataToCClass.order = (
+            "little" if end_tag == 0x12345678 else "big"
+        )
 
-        if fileobj:
-            self.data = fileobj
+
+        # 声明一下把
+        self.dex_header: Dex_HeaderItem = None
+        self.dex_string_ids = []
+        self.dex_type_ids = []
+        self.dex_proto_ids = []
+        self.dex_field_ids = []
+        self.dex_method_ids = []
+        self.dex_classdef_ids = []
+        self.dex_map_list = []
+
+        # 读取头部
+        self.dex_init_header()
+        # # 读取并解析string_ids
+        # self.dex_init_string_ids()
+        # # 读取并解析type_ids
+        # self.dex_init_type_ids()
+        # # 读取并解析proto_ids
+        # self.dex_init_proto_ids()
+        # # 读取并解析field_ids
+        # self.dex_init_field_ids()
+        # # 读取并解析method_ids
+        # self.dex_init_method_ids()
+        # # 读取并解析classdef_ids
+        # self.dex_init_classdef_ids()
+        # # 读取并解析map_list
+        # self.dex_init_maplist()
+
+        #回到最初的位置
+        #self.file.seek(0)
 
 
 
@@ -72,7 +108,7 @@ class Dexparser(QObject):
             'class_defs_size': struct.unpack('<L', self.data[0x60:0x64])[0],
             'class_defs_off': struct.unpack('<L', self.data[0x64:0x68])[0],
             'data_size': struct.unpack('<L', self.data[0x68:0x6C])[0],
-            'data_off': struct.unpack('<L', self.data[0x6C:0x70])[0]
+            'data_off': struct.unpack('<L', self.data[0x6C:0x70])[0],
         }
         self.Dex={
             'string_ids':{
@@ -158,6 +194,254 @@ class Dexparser(QObject):
             }
         '''
 
+    def dex_init_header(self):
+        if self.dex_header is not None:
+            return self.dex_header
+        self.file.seek(0)
+        self.dex_header :Dex_HeaderItem = read_file_from_struct(self.file, Dex_HeaderItem)
+        return self.dex_header
+    def dex_init_string_ids(self):
+        if len(self.dex_string_ids) != 0:
+            return self.dex_string_ids
+        self.file.seek(self.dex_header.string_ids_off.value)
+        for i in range(self.dex_header.string_ids_size.value):
+            string_id_item_tmp = read_file_from_struct(self.file, Dex_StringIdItem) #返回的是一个对象
+            string_id_item_tmp.string_data_off.info = self.__parse_string_ids(string_id_item_tmp.string_data_off.value)
+            # string_id_item_tmp.string = FileString(self.data[ (offset + str_len_size) : (offset + str_len_size) + str_len].decode('utf-8',errors='ignore'))
+            #string_id_item_tmp.string.
+            self.dex_string_ids.append(string_id_item_tmp)
+            self.sig_cost.emit(i / self.dex_header.string_ids_size.value)
+
+        return self.dex_string_ids
+    def dex_init_type_ids(self):
+        if len(self.dex_type_ids) != 0:
+            return self.dex_type_ids
+        self.file.seek(self.dex_header.type_ids_off.value)
+        for i in range(self.dex_header.type_ids_size.value):
+            type_id_item_tmp = read_file_from_struct(self.file, Dex_TypeId_Item)
+            tmp_str = self.dex_get_str(type_id_item_tmp.descriptor_idx.value)
+            type_id_item_tmp.descriptor_idx.info = {
+                'type_str': tmp_str,
+                'full_type_str': type2full(tmp_str)
+            }
+            self.dex_type_ids.append(type_id_item_tmp)
+            self.sig_cost.emit(i / self.dex_header.type_ids_size.value)
+
+        return self.dex_type_ids
+    def dex_init_proto_ids(self):
+        if len(self.dex_proto_ids) !=0:
+            return self.dex_proto_ids
+        self.file.seek(self.dex_header.proto_ids_off.value)
+        for i in range(self.dex_header.proto_ids_size.value):
+            proto_id_item_tmp = read_file_from_struct(self.file, Dex_ProtoId_Item)
+            proto_id_item_tmp.shorty_idx.info = self.dex_get_str(proto_id_item_tmp.shorty_idx.value)
+            proto_id_item_tmp.return_type_idx.info = self.dex_get_type(proto_id_item_tmp.return_type_idx.value)
+            proto_id_item_tmp.parameters_off.info = self.__parse_type_list_parameters_off(proto_id_item_tmp.parameters_off.value)
+            proto_id_item_tmp.info = self.__parse_type_ids(proto_id_item_tmp)
+            self.dex_proto_ids.append(proto_id_item_tmp)
+            self.sig_cost.emit(i / self.dex_header.proto_ids_size.value)
+        return self.dex_proto_ids
+    def dex_init_field_ids(self):
+        if len(self.dex_field_ids) != 0:
+            return self.dex_field_ids
+        self.file.seek(self.dex_header.field_ids_off.value)
+        for i in range(self.dex_header.field_ids_size.value):
+            field_id_item_tmp = read_file_from_struct(self.file, Dex_FieldId_Item)
+            field_id_item_tmp.class_idx.info = self.dex_get_type(field_id_item_tmp.class_idx.value)
+            field_id_item_tmp.type_idx.info = self.dex_get_type(field_id_item_tmp.type_idx.value)
+            field_id_item_tmp.name_idx.info = self.dex_get_str(field_id_item_tmp.name_idx.value)
+            field_id_item_tmp.info = self.__parse_field_ids(field_id_item_tmp)
+            self.dex_field_ids.append(field_id_item_tmp)
+            self.sig_cost.emit(i / self.dex_header.field_ids_size.value)
+        return self.dex_field_ids
+    def dex_init_method_ids(self):
+        if len(self.dex_method_ids) != 0:
+            return self.dex_method_ids
+        self.file.seek(self.dex_header.method_ids_off.value)
+        for i in range(self.dex_header.method_ids_size.value):
+            method_id_item_tmp:Dex_MethodId_Item = read_file_from_struct(self.file, Dex_MethodId_Item)
+            method_id_item_tmp.class_idx.info = self.dex_get_type(method_id_item_tmp.class_idx.value)
+            method_id_item_tmp.proto_idx.info = self.dex_get_proto(method_id_item_tmp.proto_idx.value)
+            method_id_item_tmp.name_idx.info = self.dex_get_str(method_id_item_tmp.name_idx.value)
+            method_id_item_tmp.info = self.__parse_method_ids(method_id_item_tmp)
+            self.dex_method_ids.append(method_id_item_tmp)
+            self.sig_cost.emit(i / self.dex_header.method_ids_size.value)
+
+        return self.dex_method_ids
+    def dex_init_classdef_ids(self):
+        if len(self.dex_classdef_ids) != 0:
+            return self.dex_classdef_ids
+        self.file.seek(self.dex_header.class_defs_off.value)
+        for i in range(self.dex_header.class_defs_size.value):
+            classdef_item_tmp:Dex_ClassDef_Item = read_file_from_struct(self.file,  Dex_ClassDef_Item)
+            classdef_item_tmp.class_idx.info = self.dex_get_type(classdef_item_tmp.class_idx.value)
+            classdef_item_tmp.access_flags.info = self.__parse_access_flags(classdef_item_tmp.access_flags.value)
+            classdef_item_tmp.superclass_idx.info = self.dex_get_type(classdef_item_tmp.superclass_idx.value)# 父类好像是一定存在的...那么是0
+            classdef_item_tmp.interfaces_off.info = self.__parse_interfaces_off(classdef_item_tmp.interfaces_off.value)
+            classdef_item_tmp.source_file_idx.info = self.dex_get_str(classdef_item_tmp.source_file_idx.value)
+            #classdef_item_tmp.annotations_off.info =
+            #classdef_item_tmp.class_data_off =
+            #classdef_item_tmp.static_values_off.info
+            #classdef_item_tmp.info = classdef_item_tmp.access_flags.info + ' ' + classdef_item_tmp.class_idx.info + ' ' + classdef_item_tmp.superclass_idx.info + ' ' + classdef_item_tmp.interfaces_off.info + ' ' in ' '
+            classdef_item_tmp.info = self.__parse_classdef_item(classdef_item_tmp)
+            self.dex_classdef_ids.append(classdef_item_tmp)
+        return self.dex_classdef_ids
+    def dex_init_maplist(self):
+        if len(self.dex_map_list) != 0:
+            return self.dex_map_list
+        offset=self.dex_header.map_off.value
+        mapitem_cnt=struct.unpack('<L', self.data[offset:offset+4])[0]
+        self.file.seek(self.dex_header.map_off.value + 4)
+        for i in range(mapitem_cnt):
+            MapList_item_tmp = read_file_from_struct(self.file, Dex_Map_Item)
+            MapList_item_tmp.info = map_type(MapList_item_tmp.type.value)
+            self.dex_map_list.append(MapList_item_tmp)
+            self.sig_cost.emit(i / mapitem_cnt)
+        return self.dex_map_list
+
+    # 最基础的3个get
+    # dex_get_str, dex_get_type , dex_get_proto
+    def dex_get_str(self,index:int)->str:
+        string_ids_len = len(self.dex_string_ids)
+        if string_ids_len  == 0:
+            self.dex_init_string_ids()
+            string_ids_len = len(self.dex_string_ids)
+        if index==0xffffffff:
+            LOG.log_info(msg="NO INDEX") #这个确实存在
+            return self.dex_string_ids[0].string_data_off.info.str_cbytes.str
+        if index >= string_ids_len : #这个是异常
+            LOG.log_error(msg="INDEX OUT OF RANGE")
+            return " "
+        return self.dex_string_ids[index].string_data_off.info.str_cbytes.str
+    def dex_get_type(self,idx:int)->str:
+        '''
+        默认返回类型全名称:
+        :param idx:
+        :return
+        '''
+        type_ids_len = len(self.dex_type_ids)
+        if type_ids_len == 0:
+            self.dex_init_type_ids()
+            type_ids_len = len(self.dex_type_ids)
+        if idx == 0xffffffff:
+            LOG.log_error(tag="type", msg="NO INDEX")
+            return ""
+        if idx >= type_ids_len:  # 这个是异常
+            LOG.log_error(tag="type", msg="INDEX OUT OF RANGE")
+            return ""
+        return self.dex_type_ids[idx].descriptor_idx.info['full_type_str']
+    def dex_get_proto(self,idx:int)->str:
+        proto_ids_len = len(self.dex_proto_ids)
+        if proto_ids_len == 0:
+            self.dex_init_proto_ids()
+            proto_ids_len = len(self.dex_proto_ids)
+        if idx == 0xffffffff:
+            LOG.log_error(tag="proto", msg="NO INDEX")
+            return " "
+        if idx >= proto_ids_len:  # 这个是异常
+            LOG.log_error(tag="proto", msg="INDEX OUT OF RANGE")
+            return " "
+        return self.dex_proto_ids[idx].info
+    def __parse_string_ids(self,offset): #属于临时的解析,所以fseek后,要把指针指回去
+        str_len,str_len_size = uleb128_value(self.data,offset)
+        @structure
+        class new_string_item:
+            len_size: c_byte*str_len_size
+            str_cbytes: c_byte * str_len
+        org_fpostion = self.file.tell()
+        self.file.seek(offset)
+        string_item = read_file_from_struct(self.file, new_string_item)
+        string_item.str_cbytes.str = string_item.str_cbytes._data_.decode('utf-8', errors='ignore')
+        self.file.seek(org_fpostion)
+        return string_item
+    def __parse_type_ids(self,proto_item)->str:
+        if proto_item.parameters_off.info == None:
+            parameters_str = "()"
+        else:
+            parameters_str = proto_item.parameters_off.info.info
+        return proto_item.return_type_idx.info + " " + parameters_str
+    def __parse_field_ids(self,field_id_item)->str:
+        return field_id_item.type_idx.info + " " + \
+            field_id_item.class_idx.info + "." + \
+            field_id_item.name_idx.info
+
+    def __parse_method_ids(self,method_id_item)->str:
+        proto_full_name = method_id_item.proto_idx.info
+        # class_type_str=self.__type_ids[class_idx]['type_str']
+        # if 'L' not in class_type_str or ';' not in class_type_str: #在有限的认知下, 该类型一定是一个 class 类, 后来发现类不一定是L开头, ';'结尾
+        #     raise Exception('proto_str error')
+        met_proto_split = proto_full_name.index(" ")  # str.find()找不到返回-1, index会抛出异常
+        ret_type_str = proto_full_name[:met_proto_split]
+        arg_type_str = proto_full_name[met_proto_split + 1:]  # 不从空格开始
+        full_method_str = ret_type_str + " " + method_id_item.class_idx.info + "." + method_id_item.name_idx.info + arg_type_str
+        return full_method_str
+
+    def __parse_access_flags(self,access_flags)->str:
+        sorted_access = [i for i in disassembler.ACCESS_ORDER if i & access_flags]  # 把属性拆开
+        access_str = ""
+        flag_len = len(sorted_access)
+        if len(sorted_access) != 0:
+            for i in range(flag_len):
+                flag = sorted_access[i]
+                access_str = access_str + disassembler.access_flag_classes[flag]
+                if i + 1 < flag_len:
+                    access_str = access_str + " "
+        return access_str
+    def __parse_interfaces_off(self,offset) ->str:
+
+        interfaces_str = ""
+        if offset != 0:
+            interfaces_cnt = struct.unpack('<L', self.data[offset:offset + 4])[0]
+            @structure
+            class new_interfaces_typelist:
+                size_: c_uint32
+                list_: c_uint16 * interfaces_cnt
+            org_pos=self.file.tell()
+            self.file.seek(offset)
+            interfaces_typelist_item = read_file_from_struct(self.file, new_interfaces_typelist)
+            self.file.seek(org_pos)
+            for i in range(interfaces_cnt):
+                interfaces_str = interfaces_str + self.dex_get_type(interfaces_typelist_item.list_[i])
+                if i + 1 < interfaces_cnt:
+                    interfaces_str = interfaces_str + ","
+        return interfaces_str
+
+    def __parse_classdef_item(self,classdef_item_tmp)  ->str:
+        out_str =''
+        if len(classdef_item_tmp.access_flags.info)!=0:
+            out_str = out_str + classdef_item_tmp.access_flags.info + ' '
+        if len(classdef_item_tmp.class_idx.info)!=0:
+            out_str = out_str + classdef_item_tmp.class_idx.info + ' '
+        if len(classdef_item_tmp.superclass_idx.info)!=0:
+            out_str = out_str + "extends " + classdef_item_tmp.superclass_idx.info + ' '
+        if len(classdef_item_tmp.interfaces_off.info)!=0:
+            out_str = out_str + "implements " + classdef_item_tmp.interfaces_off.info + ' '
+        if len(classdef_item_tmp.source_file_idx.info)!=0:
+            out_str = out_str + "from " + classdef_item_tmp.source_file_idx.info
+        return out_str
+    def __parse_type_list_parameters_off(self,offset):
+        if offset == 0:
+            return None
+        arg_cnt = struct.unpack('<L', self.data[offset : offset + 4])[0]
+        if arg_cnt == 0:
+            raise ValueError('arg_cnt == 0')
+        org_pos = self.file.tell()
+        self.file.seek(offset)
+        @structure
+        class new_TypeList:
+            size_: c_uint32
+            list_: c_uint16 * arg_cnt #不知道为什么是 list[int]类型,而不是list[uint16]
+        info = "("
+        TypeListItem = read_file_from_struct(self.file, new_TypeList)
+        for i in range(arg_cnt):
+            info = info + self.dex_get_type(TypeListItem.list_[i])
+            if i + 1 < arg_cnt:
+                info = info + ","
+        info = info + ")"
+        new_TypeList.info = info
+        self.file.seek(org_pos)
+        return TypeListItem
+
     @property
     def header(self):
         """Get header data from DEX
@@ -181,278 +465,6 @@ class Dexparser(QObject):
             0x30405060
         """
         return "%x" % self.header_data.get('checksum')
-
-    def init_string_ids(self):
-        if self.Dex['string_ids']['loaded']:
-            return self.Dex['string_ids']['content']
-        """Get string items from DEX file
-
-        :returns: list, list member is [clen,csize,c_char]
-
-        example:
-            >>> dex = Dexparser(filedir='path/to/classes.dex')
-            >>> dex.get_strings()
-            ['Ljava/Page/getJavaUtils', ...]
-        """
-        LOG.log_info(tag="dexparser", msg="init_string_ids")
-        strings = []
-        string_ids_off = self.header_data['string_ids_off']
-        str_ids_len=self.header_data['string_ids_size']
-
-        for i in range(str_ids_len):
-            idx=string_ids_off + (i * 4)
-            offset = struct.unpack('<L', self.data[idx : idx + 4])[0]
-            str_len, str_len_size = uleb128_value(self.data, offset)
-            '''
-            struct string_def
-            {
-                byte str_length;//字符串长度，不含0
-                byte str_data[1];//柔性数组，字符串内容，以0结尾
-            }
-            '''
-
-            dex_string = self.data[offset + str_len_size:offset + str_len_size + str_len].decode('utf-8',errors='ignore')
-            #出现一个问题, 如果对应的字符串不是utf-8编码,解码得到的不是字符串,那么之后的处理可能受到影响
-
-            str_mem = {
-                'len_size': str_len_size,
-                'len': str_len,
-                'str': dex_string
-            }
-            strings.append(str_mem)# 长度,数值,字节流
-            self.sig_cost.emit(i / str_ids_len )# 进度展示
-
-        self.Dex['string_ids']['content']=strings
-        self.Dex['string_ids']['loaded']=True
-
-        self.sig_cost.emit(1)  # 100%进度展示
-        return strings
-    def get_str(self,index:int)->str:
-        if self.Dex['string_ids']['loaded']==False:
-            self.init_string_ids()
-        if index==0xffffffff:
-            LOG.log_info(msg="NO INDEX") #这个确实存在
-            return self.Dex['string_ids']['content'][0]['str']
-        if index>=len(self.Dex['string_ids']['content']): #这个是异常
-            LOG.log_error(msg="INDEX OUT OF RANGE")
-            return " "
-        return self.Dex['string_ids']['content'][index]['str']
-
-    def init_type_ids(self):
-        """Get type ids from DEX file
-
-        :returns: descriptor_idx extracted from type_id_item section
-
-        example:
-            >>> dex = Dexparser(filedir='path/to/classes.dex')
-            >>> dex.init_type_ids()
-            [133, 355, 773, 494, ...]
-        """
-        if self.Dex['type_ids']['loaded']:
-            return self.Dex['type_ids']['content']
-
-        #env
-        # string_ids会自动加载
-        LOG.log_info(tag="dexparser", msg="init_type_ids")
-
-        typeids = []
-        offset = self.header_data['type_ids_off']
-        type_ids_len=self.header_data['type_ids_size']
-        for i in range(type_ids_len):
-            idx = struct.unpack('<L', self.data[offset + (i * 4):offset + (i * 4) + 4])[0]
-            type_mem={
-                'type_idx':idx,
-                'type_str': self.get_str(idx),
-                'full_type_str': type2full(self.get_str(idx))
-            }
-            typeids.append(type_mem)
-            self.sig_cost.emit(i / type_ids_len)# 进度展示
-
-
-        self.Dex['type_ids']['content']=typeids
-        self.Dex['type_ids']['loaded']=True
-
-        self.sig_cost.emit(1)  # 100%进度展示
-        return typeids
-
-    def get_type(self,idx:int):
-        '''
-        默认返回类型全名称:
-        :param idx:
-        :return
-        '''
-        if self.Dex['type_ids']['loaded']==False:
-            self.init_type_ids()
-        if idx==0xffffffff:
-            LOG.log_error(tag="type",msg="NO INDEX")
-            return " "
-        if idx>=len(self.Dex['type_ids']['content']): #这个是异常
-            LOG.log_error(tag="type",msg="INDEX OUT OF RANGE")
-            return " "
-        return self.Dex['type_ids']['content'][idx]['full_type_str']
-
-    def init_proto_ids(self):
-        """Get proto idx from DEX file
-
-        :returns: list of proto ids defined at proto_id_item
-
-        example:
-            >>> dex = Dexparser(filedir='path/to/classes.dex')
-            >>> dex.init_proto_ids()
-            [{'shorty_idx': 3000, 'return_type_idx': 330, 'param_off': 0}, ...]
-        """
-
-        if self.Dex['proto_ids']['loaded']:
-            return self.Dex['proto_ids']['content']
-        LOG.log_info(tag="dexparser", msg="init_proto_ids")
-        protoids = []
-        offset = self.header_data['proto_ids_off']
-        ptoto_ids_len=self.header_data['proto_ids_size']
-        for i in range(ptoto_ids_len):
-            sizeof_ProtoId=12
-            tmp_idx=i * sizeof_ProtoId
-            shorty_idx = struct.unpack('<L', self.data[offset + tmp_idx:offset + tmp_idx + 4])[0]
-            return_type_idx = struct.unpack('<L', self.data[offset + tmp_idx + 4:offset + tmp_idx + 8])[0]
-            param_off = struct.unpack('<L', self.data[offset + tmp_idx + 8:offset + tmp_idx + 12])[0]
-            #=== 自定义添加
-            if param_off!=0:#有参数
-                args_type_str = "( "
-                arg_cnt=struct.unpack('<L', self.data[param_off:param_off + 4])[0]
-                for i in range(arg_cnt):
-                    arg_type_id=struct.unpack('<H', self.data[param_off + 4 + 2*i : param_off + 6+ 2*i])[0]
-                    args_type_str = args_type_str + self.get_type(arg_type_id)
-                    if i+1<arg_cnt:
-                        args_type_str = args_type_str + ", "
-                args_type_str = args_type_str + " )"
-            else:
-                args_type_str = "( )"
-            full_proto_str=self.get_type(return_type_idx) + " " + args_type_str
-            proto_mem={
-                'shorty_idx': shorty_idx,
-                'return_type_idx': return_type_idx,
-                'param_off': param_off,
-                # 自定义添加
-                'short_str': self.get_str(shorty_idx),
-                'full_proto_str': full_proto_str
-            }
-            protoids.append(proto_mem)
-            self.sig_cost.emit(i / ptoto_ids_len)# 进度展示
-
-
-        self.Dex['proto_ids']['content']=protoids
-        self.Dex['proto_ids']['loaded']=True
-
-        self.sig_cost.emit(1)  # 100%进度展示
-        return protoids
-
-    def get_proto(self, idx:int):
-
-        if self.Dex['proto_ids']['loaded']==False:
-            self.init_proto_ids()
-        if idx==0xffffffff:
-            LOG.log_error(tag="proto",msg="NO INDEX")
-            return " "
-        if idx>=len(self.Dex['proto_ids']['content']): #这个是异常
-            LOG.log_error(tag="proto",msg="INDEX OUT OF RANGE")
-            return " "
-        return self.Dex['proto_ids']['content'][idx]['full_proto_str']
-
-
-    def init_field_ids(self):
-        """Get field idx from DEX file
-
-        :returns: list of field ids defined at field_id_item
-
-        example:
-            >>> dex = Dexparser(filedir='path/to/classes.dex')
-            >>> dex.init_field_ids()
-            [{'class_idx': 339, 'type_idx': 334, 'name_idx': 340}, ...]
-        """
-        if self.Dex['field_ids']['loaded']:
-            return self.Dex['field_ids']['content']
-        LOG.log_info(tag="dexparser", msg="init_field_ids")
-        fieldids = []
-        offset = self.header_data['field_ids_off']
-        field_ids_len=self.header_data['field_ids_size']
-        for i in range(field_ids_len):
-            class_idx = struct.unpack('<H', self.data[offset + (i * 8):offset + (i * 8) + 2])[0]
-            type_idx = struct.unpack('<H', self.data[offset + (i * 8) + 2:offset + (i * 8) + 4])[0]
-            name_idx = struct.unpack('<L', self.data[offset + (i * 8) + 4:offset + (i * 8) + 8])[0]
-            full_field_str=self.get_type(type_idx) + " " + self.get_type(class_idx) + "." + self.get_str(name_idx)
-            field_mem={
-                'class_idx': class_idx,
-                'type_idx': type_idx,
-                'name_idx': name_idx,
-                'full_field_str':full_field_str
-            }
-            fieldids.append(field_mem)
-            self.sig_cost.emit(i / field_ids_len)#进度展示
-
-        self.Dex['field_ids']['content']=fieldids
-        self.Dex['field_ids']['loaded']=True
-
-        self.sig_cost.emit(1)  # 100%进度展示
-        return fieldids
-
-    def get_field(self,idx:int):
-        if self.Dex['field_ids']['loaded']==False:
-            self.init_field_ids()
-        if idx==0xffffffff:
-            LOG.log_error(tag="field",msg="NO INDEX")
-            return " "
-        if idx>=len(self.Dex['field_ids']['content']): #这个是异常
-            LOG.log_error(tag="field",msg="INDEX OUT OF RANGE")
-            return " "
-        return self.Dex['field_ids']['content'][idx]['full_field_str']
-    def init_method_ids(self):
-        """Get methods from DEX file
-
-        :returns: list of methods defined at DEX file
-
-        example:
-            >>> dex = Dexparser(filedir='path/to/classes.dex')
-            >>> dex.init_method_ids()
-            [{'class_idx': 132, 'proto_idx': 253, 'name_idx': 3005}, ...]
-        """
-        if self.Dex['method_ids']['loaded']:
-            return self.Dex['method_ids']['content']
-
-        LOG.log_info(tag="dexparser", msg="init_method_ids")
-        methods = []
-        offset = self.header_data['method_ids_off']
-        method_ids_len=self.header_data['method_ids_size']
-        for i in range(method_ids_len):
-            class_idx = struct.unpack('<H', self.data[offset + (i * 8):offset + (i * 8) + 2])[0]
-            proto_idx = struct.unpack('<H', self.data[offset + (i * 8) + 2:offset + (i * 8) + 4])[0]
-            name_idx = struct.unpack('<L', self.data[offset + (i * 8) + 4:offset + (i * 8) + 8])[0]
-
-
-            proto_full_name=self.get_proto(proto_idx)
-            # class_type_str=self.__type_ids[class_idx]['type_str']
-            # if 'L' not in class_type_str or ';' not in class_type_str: #在有限的认知下, 该类型一定是一个 class 类, 后来发现类不一定是L开头, ';'结尾
-            #     raise Exception('proto_str error')
-            met_proto_split=proto_full_name.index(" ") # str.find()找不到返回-1, index会抛出异常
-            ret_type_str=proto_full_name[:met_proto_split]
-            arg_type_str=proto_full_name[met_proto_split+1:]#不从空格开始
-            full_method_str=ret_type_str + " " + self.get_type(class_idx) + "." + self.get_str(name_idx)  + arg_type_str
-
-            field_mem={
-                'class_idx': class_idx,
-                'proto_idx': proto_idx,
-                'name_idx': name_idx,
-                # 自定义
-                'full_method_str': full_method_str
-            }
-            methods.append(field_mem)
-            self.sig_cost.emit(i / method_ids_len)# 进度展示
-
-        self.Dex['method_ids']['content']=methods
-        self.Dex['method_ids']['loaded']=True
-
-        self.sig_cost.emit(1)  # 100% 进度展示
-        return methods
-
-
 
 
 
@@ -552,38 +564,7 @@ class Dexparser(QObject):
 
         self.sig_cost.emit(1)  # 100%进度展示
         return classdef_data
-    def init_maplists(self):
 
-        if self.Dex['maplists']['loaded']:
-            return self.Dex['maplists']['content']
-
-        LOG.log_info(tag="dexparser", msg="init_maplists")
-        offset=self.header_data['map_off']
-        maplist_len=struct.unpack('<L', self.data[offset:offset+4])[0]
-        sizeof_struct_maplist=12
-        start_idx=offset+4
-
-        map_list=[]
-        for i in range(maplist_len):
-            section_type=struct.unpack('<H', self.data[start_idx+0+i*sizeof_struct_maplist:start_idx+2+i*sizeof_struct_maplist])[0]
-            #unused=struct.unpack('<H', self.data[start_idx+2+i*sizeof_struct_maplist:start_idx+4+i*sizeof_struct_maplist])[0]
-            section_size=struct.unpack('<L', self.data[start_idx+4+i*sizeof_struct_maplist:start_idx+8+i*sizeof_struct_maplist])[0]
-            section_offset=struct.unpack('<L', self.data[start_idx+8+i*sizeof_struct_maplist:start_idx+12+i*sizeof_struct_maplist])[0]
-            map_item={
-                'section_type': section_type,
-                'section_size': section_size,
-                'section_offset': section_offset,
-                'section_type_str': map_type(section_type)
-            }
-            map_list.append(map_item)
-            self.sig_cost.emit(i / maplist_len)#进度展示
-
-        self.Dex['maplists']['content']=map_list
-        self.Dex['maplists']['loaded']=True
-
-
-        self.sig_cost.emit(1)  # 100%进度展示
-        return map_list
     def get_class_datas(self, offset):
         """Get class specific data from DEX file
 

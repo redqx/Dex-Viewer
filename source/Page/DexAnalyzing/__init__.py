@@ -306,10 +306,10 @@ class DexAnalyzing(QObject): # 文件解析结果 + widget 对象
             # row_cnt = self.tableWidget_Dex_strids.rowCount()
             # self.tableWidget_Dex_strids.insertRow(row_cnt)
             self.f_widget.tableWidget_Dex_strids.setItem(i, 0, QTableWidgetItem(str(i)))  # c_size
-            self.f_widget.tableWidget_Dex_strids.setItem(i, 1, QTableWidgetItem(hex(string_ids[i].string_data_off.value)))  # c_size
-            self.f_widget.tableWidget_Dex_strids.setItem(i, 2, QTableWidgetItem(str(string_ids[i].string_data_off.info.len_size._data_)))  # size_off
+            # self.f_widget.tableWidget_Dex_strids.setItem(i, 1, QTableWidgetItem(hex(string_ids[i].string_data_off.value)))  # c_size
+            # self.f_widget.tableWidget_Dex_strids.setItem(i, 2, QTableWidgetItem(str(string_ids[i].string_data_off.info.len_size._data_)))  # size_off
             # 一次性显示的数据可能太大太大, 会导致界面卡顿
-            self.f_widget.tableWidget_Dex_strids.setItem(i, 3, QTableWidgetItem(string_ids[i].string_data_off.info.str_cbytes.str[:256]))  # c_char 最多取长度32
+            self.f_widget.tableWidget_Dex_strids.setItem(i, 1, QTableWidgetItem(string_ids[i].string_data_off.info.str_cbytes.str[:256]))  # c_char 最多取长度32
 
             self.f_dex_parser.sig_cost.emit(i / str_ids_len)
             # QThread.sleep(1)
@@ -331,9 +331,9 @@ class DexAnalyzing(QObject): # 文件解析结果 + widget 对象
             #row_cnt = self.tableWidget_Dex_typeids.rowCount()
             #self.tableWidget_Dex_typeids.insertRow(row_cnt)
             self.f_widget.tableWidget_Dex_typeids.setItem(i, 0, QTableWidgetItem(str(i)))  # c_size
-            self.f_widget.tableWidget_Dex_typeids.setItem(i, 1, QTableWidgetItem(str(type_ids[i].descriptor_idx.value)))  # size_off
-            self.f_widget.tableWidget_Dex_typeids.setItem(i, 2, QTableWidgetItem(type_ids[i].descriptor_idx.info['type_str']))  # c_char
-            self.f_widget.tableWidget_Dex_typeids.setItem(i, 3, QTableWidgetItem(type_ids[i].descriptor_idx.info['full_type_str']))
+            # self.f_widget.tableWidget_Dex_typeids.setItem(i, 1, QTableWidgetItem(str(type_ids[i].descriptor_idx.value)))  # size_off
+            # self.f_widget.tableWidget_Dex_typeids.setItem(i, 2, QTableWidgetItem(type_ids[i].descriptor_idx.info['type_str']))  # c_char
+            self.f_widget.tableWidget_Dex_typeids.setItem(i, 1, QTableWidgetItem(type_ids[i].descriptor_idx.info['full_type_str']))
 
             self.f_dex_parser.sig_cost.emit(i / type_ids_len)  #进度展示
 
@@ -350,10 +350,10 @@ class DexAnalyzing(QObject): # 文件解析结果 + widget 对象
             #row_cnt = self.tableWidget_Dex_protoids.rowCount()
             #self.tableWidget_Dex_protoids.insertRow(row_cnt)
             self.f_widget.tableWidget_Dex_protoids.setItem(i, 0, QTableWidgetItem(str(i)))  # c_size
-            self.f_widget.tableWidget_Dex_protoids.setItem(i, 1, QTableWidgetItem(str(proto_ids[i].shorty_idx.value)))  # size_off
-            self.f_widget.tableWidget_Dex_protoids.setItem(i, 2, QTableWidgetItem(str(proto_ids[i].return_type_idx.value)))  # c_char
-            self.f_widget.tableWidget_Dex_protoids.setItem(i, 3, QTableWidgetItem(hex(proto_ids[i].parameters_off.value)))  # c_char
-            self.f_widget.tableWidget_Dex_protoids.setItem(i, 4, QTableWidgetItem(proto_ids[i].info))  # c_char
+            # self.f_widget.tableWidget_Dex_protoids.setItem(i, 1, QTableWidgetItem(str(proto_ids[i].shorty_idx.value)))  # size_off
+            # self.f_widget.tableWidget_Dex_protoids.setItem(i, 2, QTableWidgetItem(str(proto_ids[i].return_type_idx.value)))  # c_char
+            # self.f_widget.tableWidget_Dex_protoids.setItem(i, 3, QTableWidgetItem(hex(proto_ids[i].parameters_off.value)))  # c_char
+            self.f_widget.tableWidget_Dex_protoids.setItem(i, 1, QTableWidgetItem(proto_ids[i].info))  # c_char
 
             self.f_dex_parser.sig_cost.emit(i / proto_ids_len)  #进度展示
         #self.tableWidget_Dex_protoids.resizeColumnsToContents()
@@ -370,10 +370,10 @@ class DexAnalyzing(QObject): # 文件解析结果 + widget 对象
             #row_cnt = self.tableWidget_Dex_fieldids.rowCount()
             #self.tableWidget_Dex_fieldids.insertRow(row_cnt)
             self.f_widget.tableWidget_Dex_fieldids.setItem(i, 0, QTableWidgetItem(str(i)))  # c_size
-            self.f_widget.tableWidget_Dex_fieldids.setItem(i, 1, QTableWidgetItem(str(field_ids[i].class_idx.value)))  # size_off
-            self.f_widget.tableWidget_Dex_fieldids.setItem(i, 2, QTableWidgetItem(str(field_ids[i].type_idx.value)))  # c_char
-            self.f_widget.tableWidget_Dex_fieldids.setItem(i, 3, QTableWidgetItem(str(field_ids[i].name_idx.value)))  # c_char
-            self.f_widget.tableWidget_Dex_fieldids.setItem(i, 4, QTableWidgetItem(field_ids[i].info))  # c_char
+            # self.f_widget.tableWidget_Dex_fieldids.setItem(i, 1, QTableWidgetItem(str(field_ids[i].class_idx.value)))  # size_off
+            # self.f_widget.tableWidget_Dex_fieldids.setItem(i, 2, QTableWidgetItem(str(field_ids[i].type_idx.value)))  # c_char
+            # self.f_widget.tableWidget_Dex_fieldids.setItem(i, 3, QTableWidgetItem(str(field_ids[i].name_idx.value)))  # c_char
+            self.f_widget.tableWidget_Dex_fieldids.setItem(i, 1, QTableWidgetItem(field_ids[i].info))  # c_char
 
             self.f_dex_parser.sig_cost.emit(i / field_ids_len)  #进度展示
         #self.tableWidget_Dex_fieldids.resizeColumnsToContents()
@@ -389,10 +389,10 @@ class DexAnalyzing(QObject): # 文件解析结果 + widget 对象
             #row_cnt = self.tableWidget_Dex_methodids.rowCount()
             #self.tableWidget_Dex_methodids.insertRow(row_cnt)
             self.f_widget.tableWidget_Dex_methodids.setItem(i, 0, QTableWidgetItem(str(i)))  # c_size
-            self.f_widget.tableWidget_Dex_methodids.setItem(i, 1, QTableWidgetItem( str(method_ids[i].class_idx.value)))  # size_off
-            self.f_widget.tableWidget_Dex_methodids.setItem(i, 2,  QTableWidgetItem(str(method_ids[i].proto_idx.value)))  # c_char
-            self.f_widget.tableWidget_Dex_methodids.setItem(i, 3,  QTableWidgetItem(str(method_ids[i].name_idx.value)))  # c_char
-            self.f_widget.tableWidget_Dex_methodids.setItem(i, 4,  QTableWidgetItem( method_ids[i].info))  # c_char
+            # self.f_widget.tableWidget_Dex_methodids.setItem(i, 1, QTableWidgetItem( str(method_ids[i].class_idx.value)))  # size_off
+            # self.f_widget.tableWidget_Dex_methodids.setItem(i, 2,  QTableWidgetItem(str(method_ids[i].proto_idx.value)))  # c_char
+            # self.f_widget.tableWidget_Dex_methodids.setItem(i, 3,  QTableWidgetItem(str(method_ids[i].name_idx.value)))  # c_char
+            self.f_widget.tableWidget_Dex_methodids.setItem(i, 1,  QTableWidgetItem( method_ids[i].info))  # c_char
 
             self.f_dex_parser.sig_cost.emit(i / method_ids_len)  #进度展示
         #resizeColumnsToContents()

@@ -59,7 +59,7 @@ class Dex_HeaderItem:
 
 
 @structure
-class Dex_StringIdItem:
+class Dex_StringId_Item:
   string_data_off: c_uint32
 
 @structure
@@ -106,4 +106,51 @@ class Dex_Map_Item :
   unused: c_uint16
   size: c_uint32
   offset: c_uint32
+
+
+@structure
+class Dex_CodeItem :
+    registers_size: c_uint16
+    ins_size: c_uint16
+    outs_size: c_uint16
+    tries_size: c_uint16
+    debug_info_off: c_uint32
+    insns_size: c_uint32
+  #// Variable length data follow for complete code item.
+
+@structure
+class Dex_AnnotationsDirectory_Item :
+  class_annotations_off:c_uint32
+  fields_size:c_uint32
+  annotated_methods_size:c_uint32
+  annotated_parameters_size:c_uint32
+  field_annotations = None
+  method_annotations = None
+  parameter_annotations = None
+
+
+@structure
+class Dex_FieldAnnotation :
+  field_idx: c_uint32
+  annotations_off: c_uint32
+@structure
+class Dex_MethodAnnotation :
+   method_idx: c_uint32
+   annotations_off: c_uint32
+
+
+@structure
+class Dex_ParameterAnnotation :
+   method_idx: c_uint32
+   annotations_off: c_uint32
+
+
+
+
+
+
+
+
+
+
 

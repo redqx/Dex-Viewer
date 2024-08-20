@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from inspect import isclass
-from typing import Union, Any , TypeVar
+from typing import Union, Any, TypeVar, BinaryIO
 from io import BytesIO
 from _io import _BufferedIOBase
 from ctypes import (
@@ -194,7 +194,7 @@ class FileBytes(bytes):
     pass
 
 Structure = TypeVar("Structure")
-def read_file_from_struct(file: _BufferedIOBase, structure: type) -> Structure:
+def read_file_from_struct(file: BinaryIO, structure: type) -> Structure:
     """
     This function reads file and parse readed data
     to Structure and returns it.

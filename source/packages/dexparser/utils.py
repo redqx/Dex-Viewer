@@ -90,29 +90,25 @@ def uleb128_value(data, off):
 def encoded_field(data, offset):
     myoff = offset
 
-    field_idx_diff, size = uleb128_value(data, myoff)
-    myoff += size
-    access_flags, size = uleb128_value(data, myoff)
-    myoff += size
+    field_idx_diff, size1 = uleb128_value(data, myoff)
+    myoff += size1
+    access_flags, size2 = uleb128_value(data, myoff)
+    myoff += size2
 
-    size = myoff - offset
-
-    return [field_idx_diff, access_flags, size]
+    return [field_idx_diff, access_flags, size1,size2]
 
 
 def encoded_method(data, offset):
     myoff = offset
 
-    method_idx_diff, size = uleb128_value(data, myoff)
-    myoff += size
-    access_flags, size = uleb128_value(data, myoff)
-    myoff += size
-    code_off, size = uleb128_value(data, myoff)
-    myoff += size
+    method_idx_diff, size1 = uleb128_value(data, myoff)
+    myoff += size1
+    access_flags, size2 = uleb128_value(data, myoff)
+    myoff += size2
+    code_off, size3 = uleb128_value(data, myoff)
+    myoff += size3
 
-    size = myoff - offset
-
-    return [method_idx_diff, access_flags, code_off, size]
+    return [method_idx_diff, access_flags, code_off, size1,size2,size3]
 
 
 def encoded_annotation(data, offset):
@@ -131,6 +127,8 @@ def encoded_annotation(data, offset):
 
 
 def type2full(type_str, hash_list=False) -> str:
+    if type(type_str) != str or len(type_str) == 0:
+        raise Exception('[type2full] => type_str error')
     if hash_list:
         add_list = "[]"
     else:
